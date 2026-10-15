@@ -1,9 +1,9 @@
-import type { Metadata } from 'next';
-import { IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';
+import type { Metadata, Viewport } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 
-const sans = IBM_Plex_Sans({ variable: '--font-plex-sans', subsets: ['latin'], weight: ['400', '500', '600'] });
-const mono = IBM_Plex_Mono({ variable: '--font-plex-mono', subsets: ['latin'], weight: ['400', '500'] });
+const sans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
+const mono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
 
 const description = 'Semantic HTML that lives in the link. The link carries meaning; your client carries the look.';
 
@@ -16,6 +16,13 @@ export const metadata: Metadata = {
   description,
   openGraph: { title: 'Hashpage', description, siteName: 'Hashpage', type: 'website' },
   twitter: { card: 'summary_large_image', title: 'Hashpage', description },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
+  ],
 };
 
 // Runs before first paint so a reader link never flashes the editor chrome.

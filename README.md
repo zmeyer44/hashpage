@@ -1,3 +1,5 @@
+<img src="app/icon.svg" width="56" height="56" alt="">
+
 # Hashpage
 
 **The link carries meaning. Your client carries the look.**
@@ -44,7 +46,7 @@ Every edit is sanitized before encoding. Presentational and executable markup is
 
 ## Development
 
-Hashpage is a [Next.js](https://nextjs.org) app.
+Hashpage is a [Next.js](https://nextjs.org) app. Its interface follows Vercel's [Geist](https://vercel.com/geist/introduction) design system.
 
 ```sh
 npm install
@@ -56,6 +58,7 @@ npm run build
 | Path | What it is |
 | --- | --- |
 | `components/HashpageApp.tsx` | The editor and reader |
+| `components/Logo.tsx`, `app/icon.svg` | The logo mark and favicon |
 | `lib/codec.ts` | Link encoding and decoding, shared by browser and server |
 | `lib/sanitize.ts` | The semantic-only sanitizer, shared by browser and server |
 | `lib/summary.ts`, `lib/og.tsx` | Server-side preview text and OG image cards |
@@ -70,4 +73,4 @@ Hashpage follows the link-is-the-document idea from Paul Ford's [Tiny Little Off
 
 ## License
 
-[MIT](LICENSE). The IBM Plex fonts in `assets/fonts` are under the [SIL Open Font License](assets/fonts/OFL.txt).
+[MIT](LICENSE). The Geist and IBM Plex fonts in `assets/fonts` are under the SIL Open Font License ([Geist](assets/fonts/OFL-Geist.txt), [IBM Plex](assets/fonts/OFL-IBM-Plex.txt)).

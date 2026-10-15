@@ -8,6 +8,8 @@ import { byteLength, decode, encode, hasZip } from '@/lib/codec';
 import { sanitize } from '@/lib/sanitize';
 import { STARTER } from '@/lib/starter';
 import { THEMES, THEME_KEY } from '@/lib/themes';
+import { IconCheck, IconChevronDown, IconCopy, IconExternal, IconGitHub, IconPencil, IconPlus, IconUpload, IconWarning } from './icons';
+import { LogoMark } from './Logo';
 
 const PATH_RE = /^\/p\/([zvt]\.[A-Za-z0-9_-]+)\/?$/;
 // Preview links carry the payload in the path. Vercel returns 502 somewhere past ~8,000 characters
@@ -16,8 +18,11 @@ const PREVIEW_MAX = 8000;
 
 type Pane = 'editPane' | 'previewPane';
 type Level = 'ok' | 'warn' | 'bad';
+type Tone = 'success' | 'error';
 
 // Pragmatic bands, not a spec: SMS, chat and email, browsers only, then anything goes.
+const FILL: Record<Level, string> = { ok: 'var(--ds-green-700)', warn: 'var(--ds-amber-700)', bad: 'var(--ds-red-700)' };
+
 function verdict(len: number): { cls: Level; text: string; pct: number } {
   if (len <= 2000) return { cls: 'ok', text: 'fits anywhere, even SMS', pct: (len / 2000) * 25 };
   if (len <= 8000) return { cls: 'ok', text: 'fine for chat apps and email', pct: 25 + ((len - 2000) / 6000) * 25 };
@@ -70,7 +75,7 @@ export default function HashpageApp() {
   const [reader, setReader] = useState<boolean | null>(null);
   const [frag, setFrag] = useState('');
   const [pane, setPane] = useState<Pane>('editPane');
-  const [toast, setToast] = useState({ msg: '', show: false });
+  const [toast, setToast] = useState<{ msg: string; tone: Tone; show: boolean }>({ msg: '', tone: 'success', show: false });
 
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const linkRef = useRef<HTMLInputElement>(null);
@@ -78,8 +83,8 @@ export default function HashpageApp() {
   const editTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const showToast = useCallback((msg: string) => {
-    setToast({ msg, show: true });
+  const showToast = useCallback((msg: string, tone: Tone = 'success') => {
+    setToast({ msg, tone, show: true });
     clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast((t) => ({ ...t, show: false })), 1600);
   }, []);
@@ -102,7 +107,7 @@ export default function HashpageApp() {
         applySource(loaded.html, true);
       } else {
         setReader(false);
-        if (m || location.hash.length > 1) showToast('Could not read that link; starting fresh');
+        if (m || location.hash.length > 1) showToast('Could not read that link; starting fresh', 'error');
         applySource(STARTER, true);
       }
     })();
@@ -165,7 +170,7 @@ export default function HashpageApp() {
     } catch {
       const input = linkRef.current;
       if (input) { input.value = text; input.focus(); input.select(); }
-      showToast('Select the link bar and copy');
+      showToast('Select the link and copy it', 'error');
     }
   }
 
@@ -174,7 +179,7 @@ export default function HashpageApp() {
   const copyPreview = async () => {
     const url = location.origin + '/p/' + (await encode(html, true));
     if (url.length > PREVIEW_MAX) {
-      showToast('Too long for a preview link; copy the reader link instead');
+      showToast('Too long for a preview link; copy the reader link instead', 'error');
       return;
     }
     copyText(url, 'Preview link');
@@ -191,29 +196,42 @@ export default function HashpageApp() {
 
   const link = frag ? origin + '/#' + frag : '';
   const v = verdict(link.length);
-  const themeOptions = Object.keys(THEMES).map((k) => <option key={k} value={k}>{THEMES[k].name}</option>);
+
+  const themeSelect = (
+    <label className="select">
+      <span className="label sm-hide">Theme</span>
+      <select aria-label="Viewer theme" value={theme} onChange={(e) => writeTheme(e.target.value)}>
+        {Object.keys(THEMES).map((k) => <option key={k} value={k}>{THEMES[k].name}</option>)}
+      </select>
+      <span className="chevron"><IconChevronDown /></span>
+    </label>
+  );
 
   return (
     <>
-      <header>
-        <div className="row">
+      <header className="top">
+        <div className="bar">
           <div className="brand">
-            <h1>Hashpage</h1>
+            <LogoMark size={24} />
+            <h1 className="wordmark">Hashpage</h1>
             <span className="tag">The link carries meaning. Your client carries the look.</span>
-            <a className="repo" href="https://github.com/zmeyer44/hashpage" target="_blank" rel="noopener">GitHub</a>
           </div>
-          <label className="sel"><span>Theme</span><select aria-label="Viewer theme" value={theme} onChange={(e) => writeTheme(e.target.value)}>{themeOptions}</select></label>
-          <button className="btn" type="button" onClick={() => { applySource(newDocument(), true); editorRef.current?.focus(); }}>New</button>
-          <label className="btn">Open file<input type="file" accept=".html,.htm,text/html" onChange={openFile} /></label>
-          <a className="btn" href={link || '#'} target="_blank" rel="noopener">Open in tab</a>
-          <button className="btn" type="button" onClick={copyPreview} title="Puts the page in the link's path so chat apps can show a preview card. Unlike # links, the server sees the page.">Copy preview link</button>
-          <button className="btn" type="button" onClick={copyReader}>Copy reader link</button>
-          <button className="btn primary" type="button" onClick={copyEdit}>Copy edit link</button>
+          <div className="actions">
+            {themeSelect}
+            <button className="btn btn-secondary" type="button" onClick={() => { applySource(newDocument(), true); editorRef.current?.focus(); }}><IconPlus />New</button>
+            <label className="btn btn-secondary"><IconUpload />Open File<input type="file" accept=".html,.htm,text/html" onChange={openFile} /></label>
+            <a className="btn btn-secondary" href={link || '#'} target="_blank" rel="noopener"><span className="sm-hide">Open in Tab</span><IconExternal /></a>
+            <span className="divider" aria-hidden="true" />
+            <button className="btn btn-secondary" type="button" onClick={copyPreview} title="Puts the page in the link's path so chat apps can show a preview card. Unlike # links, the server sees the page."><span><span className="sm-hide">Copy </span>Preview Link</span></button>
+            <button className="btn btn-secondary" type="button" onClick={copyReader}><span><span className="sm-hide">Copy </span>Reader Link</span></button>
+            <button className="btn btn-primary" type="button" onClick={copyEdit}><span><span className="sm-hide">Copy </span>Edit Link</span></button>
+          </div>
+          <a className="btn btn-tertiary btn-icon repo" href="https://github.com/zmeyer44/hashpage" target="_blank" rel="noopener" aria-label="Hashpage on GitHub"><IconGitHub /></a>
         </div>
-        <div className="linkbar">
-          <label htmlFor="linkOut">Link</label>
-          <input id="linkOut" ref={linkRef} readOnly spellCheck={false} aria-label="Current link" value={link} onFocus={(e) => e.currentTarget.select()} />
-          <button className="btn" type="button" onClick={() => copyText(linkRef.current?.value || link, 'Link')}>Copy</button>
+        <div className="field">
+          <label className="prefix" htmlFor="linkOut">Link</label>
+          <input id="linkOut" ref={linkRef} readOnly spellCheck={false} value={link} onFocus={(e) => e.currentTarget.select()} />
+          <button className="btn btn-tertiary btn-tiny btn-icon" type="button" aria-label="Copy link" onClick={() => copyText(linkRef.current?.value || link, 'Link')}><IconCopy /></button>
         </div>
         <div className="gauge">
           <div className="stats">
@@ -221,12 +239,14 @@ export default function HashpageApp() {
             <span>deflated <b>{frag ? Math.floor(((frag.length - 2) * 3) / 4).toLocaleString() : 0}</b> B</span>
             <span>link <b>{link.length.toLocaleString()}</b> chars</span>
           </div>
-          <span className={'verdict ' + v.cls}>{v.text}</span>
-          <div className="bar"><div className="fill" style={{ width: v.pct + '%', background: `var(--${v.cls})` }} /></div>
+          <span className={'badge ' + v.cls}>{v.text}</span>
+          <div className="progress" role="meter" aria-label="Link length" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(v.pct)}>
+            <div style={{ width: v.pct + '%', background: FILL[v.cls] }} />
+          </div>
         </div>
-        <div className="tabs" role="tablist">
+        <div className="switch" role="tablist" aria-label="Pane">
           {(['editPane', 'previewPane'] as const).map((p) => (
-            <button key={p} type="button" role="tab" aria-selected={pane === p} onClick={() => setPane(p)}>{p === 'editPane' ? 'Edit' : 'Preview'}</button>
+            <button key={p} type="button" role="tab" aria-selected={pane === p} aria-controls={p} onClick={() => setPane(p)}>{p === 'editPane' ? 'Edit' : 'Preview'}</button>
           ))}
         </div>
       </header>
@@ -234,25 +254,34 @@ export default function HashpageApp() {
       <main>
         <section className={'pane' + (pane === 'editPane' ? ' active' : '')} id="editPane">
           <div className="pane-head">
-            <span>Semantic HTML <span className="stripped">{stripped ? `· ${stripped} presentational ${stripped === 1 ? 'thing' : 'things'} dropped` : ''}</span></span>
-            <button className="btn" type="button" onClick={() => copyText(html, 'HTML')}>Copy HTML</button>
+            <span>
+              <span className="title">Semantic HTML</span>
+              {stripped ? <span className="meta warn">{stripped} presentational {stripped === 1 ? 'thing' : 'things'} dropped</span> : null}
+            </span>
+            <button className="btn btn-tertiary btn-tiny" type="button" onClick={() => copyText(html, 'HTML')}><IconCopy />Copy HTML</button>
           </div>
           <textarea id="editor" ref={editorRef} spellCheck={false} autoCapitalize="off" autoComplete="off" aria-label="HTML source" value={source} onChange={(e) => onEdit(e.target.value)} onKeyDown={onEditorKey} />
         </section>
         <section className={'pane' + (pane === 'previewPane' ? ' active' : '')} id="previewPane">
           <div className="pane-head">
-            <span>Preview</span>
-            <span>{zip ? 'theme is yours, not in the link' : 'theme is yours, not in the link · no compression in this browser'}</span>
+            <span className="title">Preview</span>
+            <span className="meta">{zip ? 'Theme is yours, not in the link' : 'Theme is yours, not in the link · no compression in this browser'}</span>
           </div>
           <iframe id="preview" sandbox="allow-popups" title="Rendered page" srcDoc={previewDoc(theme, html)} />
         </section>
       </main>
 
       <div id="readerBar">
-        <label className="sel"><span>Theme</span><select aria-label="Viewer theme" value={theme} onChange={(e) => writeTheme(e.target.value)}>{themeOptions}</select></label>
-        <button className="btn primary" type="button" onClick={() => setReader(false)}>Edit this page</button>
+        {/* A full load on purpose: a soft navigation from /#v.… to / would keep the reader's document on screen. */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+        <a className="btn btn-tertiary btn-icon" href="/" aria-label="About Hashpage"><LogoMark size={20} /></a>
+        {themeSelect}
+        <button className="btn btn-primary" type="button" onClick={() => setReader(false)}><IconPencil />Edit This Page</button>
       </div>
-      <div className={'toast' + (toast.show ? ' show' : '')} role="status">{toast.msg}</div>
+      <div className={'toast ' + toast.tone + (toast.show ? ' show' : '')} role="status" aria-live="polite">
+        {toast.tone === 'success' ? <IconCheck /> : <IconWarning />}
+        <span>{toast.msg}</span>
+      </div>
     </>
   );
 }

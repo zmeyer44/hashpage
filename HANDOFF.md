@@ -16,11 +16,13 @@ Hosted on Vercel at https://hashpage.dev (project `zach-s-projects/hashpage`, de
 
 | Path | What it is |
 | --- | --- |
-| `components/HashpageApp.tsx` | The editor and reader, a client component. Same DOM ids and classes as the original single-file client, so `app/globals.css` carried over unchanged. |
+| `components/HashpageApp.tsx` | The editor and reader, a client component. |
+| `components/Logo.tsx`, `components/icons.tsx` | The logo mark (exports its path data for the OG cards) and 16px line icons. |
+| `app/icon.svg`, `app/favicon.ico`, `app/apple-icon.png` | Favicons, picked up by Next's file conventions. The SVG switches to a light mark in dark mode; the ICO (16/32/48) and the 180px touch icon were rendered from the same artwork. |
 | `lib/codec.ts` | `deflate`, `inflate(bytes, maxBytes)`, `b64u`, `unb64u`, `encode(html, reader)`, `decode(payload, maxBytes)`. Runs in browsers and Node. |
 | `lib/sanitize.ts` | `DROP_TAGS`, `DROP_ATTRS`, `sanitizeDocument(doc)` (shared by client and server), `sanitize(src)` (browser, uses `DOMParser`). |
 | `lib/summary.ts` | Server only. Decodes a `/p/` payload (capped at 256 KB inflated), parses it with linkedom, sanitizes, and extracts title, lede, first blocks and word count. Only text leaves it. |
-| `lib/og.tsx` | Link-preview cards drawn with `next/og`: `siteCard()` and `documentCard(summary)`. Fonts in `assets/fonts` (IBM Plex, OFL). |
+| `lib/og.tsx` | Link-preview cards drawn with `next/og`: `siteCard()` and `documentCard(summary)`. Fonts in `assets/fonts` (Geist and IBM Plex Serif, OFL; Satori needs .woff, not .woff2). |
 | `lib/themes.ts`, `lib/starter.ts` | The viewer themes and the starter document, moved verbatim from the old `index.html`. |
 | `app/page.tsx` | `/`: the client. Documents arrive in the fragment. |
 | `app/p/[payload]/page.tsx` | `/p/<prefix>.<payload>`: the same client, plus `generateMetadata` from the decoded document. `robots: noindex`. |
@@ -36,9 +38,9 @@ Hosted on Vercel at https://hashpage.dev (project `zach-s-projects/hashpage`, de
 
 **Themes** (`THEMES`). Keys: `reader`, `terminal`, `brutalist`, `newsprint`, `none`. Each is `{ name, css }`. The CSS must style bare elements only and must handle every element in the starter document's vocabulary table. The chosen key is saved in `localStorage` under `hashpage.theme` through a `useSyncExternalStore` store (with an in-memory fallback when storage is unavailable). Rendering: the preview iframe's `srcDoc` is doctype + metas + `<style>theme.css</style>` + html, with `sandbox="allow-popups"`; scripts are not allowed and must not be, since the sanitizer is the second line of defense, not the first.
 
-**UI.** Header: brand, GitHub link, theme select, New, Open file, Open in tab, Copy preview link, Copy reader link, Copy edit link; a readonly link bar with Copy; a size gauge (HTML bytes, deflated bytes, link length, verdict). Main: editor `<textarea>` left, preview iframe right; stacks to tabs under 760px. Reader mode (`html.reader`, entered via a `v.` link or a `/p/v.` path) hides the editor and header and shows a floating bar with a theme select and "Edit this page." An inline script in `app/layout.tsx` sets `html.reader` before first paint so readers never see the editor flash. Readers keep the address they arrived on; once someone edits, `history.replaceState` keeps the address bar at `/#z.…`. A `hashchange` listener reloads the document if the fragment changes externally.
+**UI.** Follows Vercel's Geist design system (vercel.com/geist). Header: logo and wordmark, theme select, New, Open File, Open in Tab, Copy Preview Link, Copy Reader Link, Copy Edit Link (primary), GitHub icon; a read-only link field with a copy button; a size gauge (stats in mono, a status badge, a progress bar). On phones the copy buttons drop the word "Copy" visually (it stays in the accessible name) and Open in Tab becomes an icon. Main: editor and preview as two cards; under 760px a segmented switch picks one. Reader mode (`html.reader`, entered via a `v.` link or a `/p/v.` path) hides the editor and header and shows a floating bar with the logo (a full-page link to `/`), a theme select and "Edit This Page." An inline script in `app/layout.tsx` sets `html.reader` before first paint so readers never see the editor flash. Readers keep the address they arrived on; once someone edits, `history.replaceState` keeps the address bar at `/#z.…`. A `hashchange` listener reloads the document if the fragment changes externally.
 
-**OG cards.** Reader-theme colors, IBM Plex Serif. The document card shows the title, the first paragraph as a lede, then the next blocks (headings, paragraphs, list items, quotes) until the space runs out, fading into a footer with word count and reading time. `nav`, `footer`, `table`, `details`, `aside` and `figure` are skipped. Satori needs `display: flex` on every multi-child element, and blocks need `flexShrink: 0` or they overlap when the card overflows.
+**OG cards.** The site card is Geist dark with the logo. The document card uses Reader-theme colors and IBM Plex Serif, with the logo and Geist Mono in its footer; it shows the title, the first paragraph as a lede, then the next blocks (headings, paragraphs, list items, quotes) until the space runs out, fading into a footer with word count and reading time. `nav`, `footer`, `table`, `details`, `aside` and `figure` are skipped. Satori needs `display: flex` on every multi-child element, and blocks need `flexShrink: 0` or they overlap when the card overflows.
 
 **Size verdicts.** ≤2,000 chars "fits anywhere, even SMS"; ≤8,000 "fine for chat apps and email"; ≤32,000 "browsers only; some apps truncate"; above that "may not survive sharing." These are pragmatic, not sourced from a spec. If you refine them, keep the four-band shape.
 
@@ -47,7 +49,7 @@ Hosted on Vercel at https://hashpage.dev (project `zach-s-projects/hashpage`, de
 ## Conventions
 
 - TypeScript, React function components, no UI framework or CSS framework. Keep dependencies few: today they are `next`, `react`, `react-dom` and `linkedom`.
-- Design tokens live in `:root` at the top of `app/globals.css` and must be defined for light, `prefers-color-scheme: dark`, and `[data-theme="dark"]`. Do not introduce literal colors in component rules.
+- The chrome uses Geist's tokens (`--ds-background-*`, `--ds-gray-*`, `--ds-gray-alpha-*`, accent scales, `--ds-focus-ring`, shadows), copied from vercel.com/geist into `:root` at the top of `app/globals.css` for light, `prefers-color-scheme: dark`, and `[data-theme="dark"]`. Steps 100–300 are component backgrounds, 400–600 borders, 700–800 solid fills, 900–1000 text. Do not introduce literal colors in component rules. Type follows Geist's scale (label 13/14, copy 13 mono, button 14/12, heading 16); controls are 32px high with a 6px radius, cards and menus 12px. Geist and Geist Mono load through `next/font/google`.
 - The page must work at 400px width with no horizontal scroll, and must stay complete at rest (no content hidden until scroll or interaction).
 - The host page's theme (the editor chrome) and the document themes (inside the iframe) are separate systems. Don't let one leak into the other.
 - `cacheComponents` is on. Anything that reads `params` must sit behind `Suspense` or be marked intentional; see the `Connection` marker in `app/p/[payload]/page.tsx`.
