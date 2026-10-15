@@ -45,7 +45,8 @@ function Frame({ children }: { children: ReactNode }) {
 }
 
 async function render(node: ReactElement) {
-  return new ImageResponse(node, { ...OG_SIZE, fonts: await fonts() });
+  // A card is a pure function of its URL, so caches may keep it forever.
+  return new ImageResponse(node, { ...OG_SIZE, fonts: await fonts(), headers: { 'Cache-Control': 'public, max-age=31536000, immutable' } });
 }
 
 export function siteCard() {

@@ -38,7 +38,7 @@ Preview links carry the same payload in the path, where crawlers can see it:
 https://hashpage.dev/p/v.<base64url payload>
 ```
 
-The server decodes it, sanitizes it with the same rules as the editor, and uses the text for `og:` tags and a generated image. Preview pages are marked `noindex`, and links over 12,000 characters are refused.
+The server decodes it, sanitizes it with the same rules as the editor, and uses the text for `og:` tags and a generated image. Preview pages are marked `noindex`, and links over 8,000 characters are refused.
 
 Every edit is sanitized before encoding. Presentational and executable markup is dropped: `style`, `script`, `iframe`, `svg`, `class`, `style=""`, `on*` handlers, `javascript:` URLs, and similar. Previews render in a sandboxed iframe with scripts disabled.
 

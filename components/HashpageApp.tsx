@@ -10,8 +10,9 @@ import { STARTER } from '@/lib/starter';
 import { THEMES, THEME_KEY } from '@/lib/themes';
 
 const PATH_RE = /^\/p\/([zvt]\.[A-Za-z0-9_-]+)\/?$/;
-// Preview links carry the payload in the path, which the server and link-preview crawlers must accept.
-const PREVIEW_MAX = 12000;
+// Preview links carry the payload in the path. Vercel returns 502 somewhere past ~8,000 characters
+// (measured Oct 2026), and the og:image URL adds ~35 more, so this matches the "chat apps and email" band.
+const PREVIEW_MAX = 8000;
 
 type Pane = 'editPane' | 'previewPane';
 type Level = 'ok' | 'warn' | 'bad';
