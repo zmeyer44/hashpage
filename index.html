@@ -55,6 +55,8 @@ header {
 .brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; }
 .brand h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
 .brand .tag { color: var(--muted); font-size: 13px; }
+.brand .repo { color: var(--muted); font-size: 13px; text-decoration: none; }
+.brand .repo:hover { color: var(--accent); text-decoration: underline; }
 .btn, .sel {
   border: 1px solid var(--line); background: var(--panel-2); border-radius: 6px; padding: 6px 11px;
   font-size: 13px; font-weight: 500; line-height: 1.2; white-space: nowrap; text-decoration: none; color: var(--fg);
@@ -139,7 +141,7 @@ body.reader #readerBar { display: flex; }
 
 <header>
   <div class="row">
-    <div class="brand"><h1>Hashpage</h1><span class="tag">The link carries meaning. Your client carries the look.</span></div>
+    <div class="brand"><h1>Hashpage</h1><span class="tag">The link carries meaning. Your client carries the look.</span><a class="repo" href="https://github.com/zmeyer44/hashpage" target="_blank" rel="noopener">GitHub</a></div>
     <label class="sel"><span>Theme</span><select id="themeSel" aria-label="Viewer theme"></select></label>
     <button class="btn" id="newBtn" type="button">New</button>
     <label class="btn">Open file<input type="file" id="fileIn" accept=".html,.htm,text/html"></label>

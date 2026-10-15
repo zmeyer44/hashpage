@@ -6,7 +6,7 @@ Hashpage is a document format and a reference client for it. A document is seman
 
 The reader decides what a page looks like. The client ships several themes (Reader, Terminal, Brutalist, Newsprint, None), each a classless stylesheet for bare elements. A reader's theme choice stays on their device and is never part of a link.
 
-**Try it:** <https://zmeyer44.github.io/hashpage/>
+**Try it:** <https://hashpage.dev/>
 
 ## Using it
 
@@ -20,7 +20,7 @@ The size gauge shows how far the link will travel. Up to 2,000 characters fits a
 ## Link format
 
 ```
-https://zmeyer44.github.io/hashpage/#<prefix>.<base64url payload>
+https://hashpage.dev/#<prefix>.<base64url payload>
 ```
 
 | Prefix | Payload                      | Opens in |
